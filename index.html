@@ -230,6 +230,15 @@ $("#pv").onclick=function(){go(si-1);auto()};$("#nx").onclick=function(){go(si+1
 function ci(u){return u?'<img src="'+esc(u)+'" alt="" style="max-height:84px;max-width:100%;object-fit:contain;border-radius:10px;align-self:flex-start">':""}
 function cv(x){return x.cover?' style="background:url('+esc(x.cover)+') center/cover"':""}
 function mk(t,c,h){var d=document.createElement(t);if(c)d.className=c;if(h!=null)d.innerHTML=h;return d}
+/* ===== KẾT NỐI SUPABASE: điền 2 giá trị dưới đây (xem file HUONG_DAN.md) ===== */
+var SB_URL="https://fjmrrjlldvqupyjeaboh.supabase.co",SB_KEY="sb_publishable_nuuhz_a-hB5Fx5xyJmvU7w_45sV4isu";
+var SB=!!(SB_URL&&SB_KEY),TOKEN="",PDFID=null,SEED=null;
+try{TOKEN=sessionStorage.getItem("atm_token")||""}catch(e){}
+function sbh(x){var h={apikey:SB_KEY,"Content-Type":"application/json"};if(TOKEN)h.Authorization="Bearer "+TOKEN;if(x)for(var k in x)h[k]=x[k];return h}
+function sbf(path,opt){opt=opt||{};opt.headers=sbh(opt.headers);return fetch(SB_URL+path,opt).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(r.status+" "+t)});return r.status===204?null:r.json().catch(function(){return null})})}
+function fe(e){return /^(401|403)/.test(String(e&&e.message))?"Phiên đăng nhập hết hạn, hãy đăng xuất rồi đăng nhập lại.":"Thao tác không thành công, thử lại sau."}
+function loadAll(){if(!SB)return;var KM={video:V,game:G,ebook:P,card:F,post:PO};sbf("/rest/v1/items?select=id,kind,data&order=created_at.asc").then(function(rows){Object.keys(KM).forEach(function(k){KM[k].length=0});PDF="";PDFID=null;rows.forEach(function(r){if(r.kind==="pdf"){PDF=(r.data&&r.data.url)||"";PDFID=r.id}else if(KM[r.kind]){var o=r.data||{};o._id=r.id;KM[r.kind].push(o)}});ra();if(LG&&!$("#adm").hidden)sh()}).catch(function(){tt("Không tải được dữ liệu từ máy chủ.")})}
+function seed(){if(!TOKEN){tt("Bạn cần đăng nhập.");return}var rows=[];Object.keys(SEED).forEach(function(k){SEED[k].forEach(function(o){rows.push({kind:k,data:o})})});sbf("/rest/v1/items",{method:"POST",body:JSON.stringify(rows)}).then(function(){tt("Đã nạp dữ liệu mẫu.");loadAll()}).catch(function(e){tt(fe(e))})}
 var OK={B:1,I:1,U:1,STRONG:1,EM:1,H2:1,H3:1,P:1,UL:1,OL:1,LI:1,BR:1,DIV:1,SPAN:1,IMG:1};
 function san(h){var d=new DOMParser().parseFromString("<body>"+(h||"")+"</body>","text/html").body,o=document.createElement("div");(function w(a,b){a.childNodes.forEach(function(c){if(c.nodeType===3)b.appendChild(document.createTextNode(c.nodeValue));else if(c.nodeType===1){var t=c.tagName;if(OK[t]){var e=document.createElement(t.toLowerCase()),m=/text-align:\s*(left|right|center|justify)/.exec(c.getAttribute("style")||"");if(m)e.style.textAlign=m[1];if(t==="IMG"){var s=c.getAttribute("src")||"";if(!/^(data:image\/|https:\/\/)/.test(s))return;e.src=s}b.appendChild(e);w(c,e)}else if(t!=="SCRIPT"&&t!=="STYLE")w(c,b)}})})(d,o);return o.innerHTML}
 var V=[{t:"Tin nhắn trúng thưởng và bẫy liên kết lạ",link:"",emoji:"🎁"},{t:"Cuộc gọi video lừa đảo của “bạn thân” (deepfake AI)",link:"",emoji:"📹"},{t:"Bị bêu xấu và công kích trong nhóm chat",link:"",emoji:"💬"},{t:"Tin giả lan nhanh và kỹ năng kiểm chứng",link:"",emoji:"📰"},{t:"Lộ mã OTP vì một cuộc gọi “ngân hàng”",link:"",emoji:"📞"}];
@@ -252,13 +261,13 @@ function rpdf(){document.querySelectorAll(".dlb").forEach(function(a){var ok=/^h
 $("#bp").onclick=function(){if(P.length){pi=(pi+P.length-1)%P.length;pg()}};$("#bn").onclick=function(){if(P.length){pi=(pi+1)%P.length;pg()}};
 function ff(el,n){el.innerHTML="";F.slice(0,n).forEach(function(x){var d=mk("div","fc",'<div><div class="f">'+'<b>'+esc(x.emoji||"🎴")+' Tình huống</b><span>'+esc(x.f)+'</span>'+ci(x.fi)+'<span class="hint">Chạm để xem cách xử lý</span></div><div class="b"><b>Phân tích theo 4C</b><span>'+esc(x.b)+'</span>'+ci(x.bi)+'<span class="hint">Chạm để lật lại</span></div></div>');d.onclick=function(){d.classList.toggle("on")};el.appendChild(d)})}
 function fp(el,n){el.innerHTML="";PO.slice(0,n).forEach(function(x,i){var d=mk("div","card",'<div class="vid"'+(x.cover?' style="background:url('+esc(x.cover)+') center/cover"':"")+'>'+(x.cover?"":esc(x.emoji||"📰"))+'</div><h3>'+esc(x.t)+'</h3>'),b=mk("button","btn main sm","Đọc bài");b.type="button";b.onclick=function(){var m=$("#pmb");m.innerHTML="";var h=mk("div","hh",'<h3 style="margin:0">'+esc(x.t)+'</h3>'),c=mk("button","btn line sm","✕");c.type="button";c.onclick=function(){$("#pm").hidden=true};h.appendChild(c);m.appendChild(h);if(x.cover)m.appendChild(mk("img",null)).src=x.cover;m.appendChild(mk("div",null,san(x.html)));$("#pm").hidden=false};d.appendChild(b);el.appendChild(d)});if(!PO.length)el.innerHTML='<p class="tag">Chưa có bài viết.</p>'}
-function ra(){fv($("#vids"),4);fv($("#vids2"),999);fg($("#gms"),3);fg($("#gms2"),999);pg();rch();rpdf();ff($("#fcs"),3);ff($("#fcs2"),999);fp($("#pst"),3);fp($("#pst2"),999)}ra();
+function ra(){fv($("#vids"),4);fv($("#vids2"),999);fg($("#gms"),3);fg($("#gms2"),999);pg();rch();rpdf();ff($("#fcs"),3);ff($("#fcs2"),999);fp($("#pst"),3);fp($("#pst2"),999)}if(SB){SEED=JSON.parse(JSON.stringify({video:V,game:G,ebook:P,card:F,post:PO}));[V,G,P,F,PO].forEach(function(a){a.length=0})}ra();
 $("#gm").onclick=function(e){if(e.target===this)this.hidden=true};$("#pm").onclick=function(e){if(e.target===this)this.hidden=true};
 /* challenge buttons */
 function pl(){$("#tn").textContent="Chưa gắn liên kết. Khi có file sổ tay hoặc Google Forms, bạn gắn vào nút này."}
 $("#b1").onclick=pl;$("#b2").onclick=pl;
 /* chat */
-var panel=$("#panel"),log=$("#log"),ci=$("#ci"),hist=[],sfn=null,busy=false;
+var panel=$("#panel"),log=$("#log"),cin=$("#ci"),hist=[],sfn=null,busy=false;
 function add(c,t){var d=document.createElement("div");d.className="m "+c;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
 function open(){panel.classList.add("open");$("#bb").style.display="none";if(!log.children.length)add("ai","Chào bạn! Mình trả lời về Quy tắc 4C và cách xử lý khi gặp lừa đảo, tin giả, bắt nạt mạng. Đừng nhập thông tin cá nhân nhé.")}
 $("#fab").onclick=function(){panel.classList.contains("open")?panel.classList.remove("open"):open()};$("#cx").onclick=function(){panel.classList.remove("open")};
@@ -276,7 +285,7 @@ async function ask(t){if(busy)return;$("#ch").hidden=true;add("me",t);hist.push(
 if(!sfn){try{sfn=await claude.use("sample")}catch(e){sfn=null}}
 var lo=local(t);if(!sfn){b.textContent=lo;hist.push({role:"assistant",content:lo});return}
 busy=true;try{var r=await sfn([{role:"user",content:rules()}].concat(hist.slice(-10)),{cache:false,modelTier:"quick",onText:function(u){b.textContent=u.text;log.scrollTop=log.scrollHeight}});hist.push({role:"assistant",content:r.text})}catch(e){b.textContent=(e&&e.text)||lo;hist.push({role:"assistant",content:b.textContent})}finally{busy=false}}
-$("#cf").onsubmit=function(e){e.preventDefault();var v=ci.value.trim();if(v){ci.value="";ask(v)}};
+$("#cf").onsubmit=function(e){e.preventDefault();var v=cin.value.trim();if(v){cin.value="";ask(v)}};
 function tt(m){var d=$("#tt");d.textContent=m;d.style.display="block";clearTimeout(tt.t);tt.t=setTimeout(function(){d.style.display="none"},3500)}
 var VW={about:"v-about",video:"v-video","tro-choi":"v-game","cam-nang":"v-cam","the-hoc":"v-the","tin-tuc":"v-post"};
 function route(){var h=location.hash.slice(1),isv=!!VW[h];Object.keys(VW).forEach(function(k){$("#"+VW[k]).hidden=(k!==h)});$("#homev").hidden=isv;if(isv||!h)window.scrollTo(0,0);else{var el=document.getElementById(h);if(el)el.scrollIntoView()}}
@@ -306,18 +315,26 @@ upd();var rw=mk("div","row"),sb=mk("button","btn main",EDIT>=0?"💾 Lưu thay �
 function sh(){var tb=$("#tb");tb.innerHTML="";Object.keys(C).forEach(function(k){var b=mk("button","tabb"+(k===CUR?" on":""),C[k].n);b.type="button";b.onclick=function(){CUR=k;EDIT=-1;sh()};tb.appendChild(b)});
 var c=C[CUR],ls=$("#ls");ls.innerHTML="";$("#af").style.display=c.f?"grid":"none";
 if(!c.f){ls.innerHTML='<p>Chưa có minh chứng nào. Khi có máy chủ thật, bài nộp từ Google Forms sẽ hiện ở đây và xuất được ra Excel.</p><button class="btn line" type="button" id="xp">Xuất Excel</button>';$("#xp").onclick=function(){tt("Cần máy chủ thật để xuất dữ liệu.")};return}
-if(CUR==="ebook"){var r=mk("div","row"),pi2=mk("input"),sv=mk("button","btn line sm","Lưu liên kết");pi2.placeholder="Liên kết file PDF cẩm nang (https://…)";pi2.value=PDF;pi2.style.flex="1";sv.type="button";sv.onclick=function(){PDF=pi2.value.trim();rpdf();tt("Đã lưu liên kết PDF")};r.appendChild(pi2);r.appendChild(sv);ls.appendChild(r)}
-c.a.forEach(function(x,i){var d=mk("div","it"),s2=mk("span");s2.textContent=(x.cover||x.fi||x.bi?"🖼 ":(x.emoji?x.emoji+" ":""))+(x[c.tk]||"(chỉ có hình)");var w=mk("span","row"),e=mk("button","btn line sm","Sửa"),b=mk("button","btn line sm","Xóa");e.type=b.type="button";e.onclick=function(){EDIT=i;sh();$("#af").scrollIntoView()};b.onclick=function(){c.a.splice(i,1);EDIT=-1;ra();sh()};w.appendChild(e);w.appendChild(b);d.appendChild(s2);d.appendChild(w);ls.appendChild(d)});
-if(!c.a.length)ls.appendChild(mk("p","tag","Chưa có mục nào."));bf()}
+if(CUR==="ebook"){var r=mk("div","row"),pi2=mk("input"),sv=mk("button","btn line sm","Lưu liên kết");pi2.placeholder="Liên kết file PDF cẩm nang (https://…)";pi2.value=PDF;pi2.style.flex="1";sv.type="button";sv.onclick=function(){var u=pi2.value.trim(),fin=function(id){PDF=u;if(id)PDFID=id;rpdf();tt("Đã lưu liên kết PDF")};if(!SB){fin();return}if(!TOKEN){tt("Bạn cần đăng nhập lại.");return}(PDFID?sbf("/rest/v1/items?id=eq."+PDFID,{method:"PATCH",body:JSON.stringify({data:{url:u}})}).then(function(){fin()}):sbf("/rest/v1/items",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({kind:"pdf",data:{url:u}})}).then(function(r){fin(r&&r[0]&&r[0].id)})).catch(function(e){tt(fe(e))})};r.appendChild(pi2);r.appendChild(sv);ls.appendChild(r)}
+c.a.forEach(function(x,i){var d=mk("div","it"),s2=mk("span");s2.textContent=(x.cover||x.fi||x.bi?"🖼 ":(x.emoji?x.emoji+" ":""))+(x[c.tk]||"(chỉ có hình)");var w=mk("span","row"),e=mk("button","btn line sm","Sửa"),b=mk("button","btn line sm","Xóa");e.type=b.type="button";e.onclick=function(){EDIT=i;sh();$("#af").scrollIntoView()};b.onclick=function(){if(!confirm("Xóa mục này?"))return;var fin=function(){c.a.splice(i,1);EDIT=-1;ra();sh()};if(SB&&x._id){if(!TOKEN){tt("Bạn cần đăng nhập lại.");return}sbf("/rest/v1/items?id=eq."+x._id,{method:"DELETE"}).then(fin).catch(function(e){tt(fe(e))})}else fin()};w.appendChild(e);w.appendChild(b);d.appendChild(s2);d.appendChild(w);ls.appendChild(d)});
+if(!c.a.length)ls.appendChild(mk("p","tag","Chưa có mục nào."));if(SB&&SEED&&!V.length&&!G.length&&!P.length&&!F.length&&!PO.length){var sd=mk("button","btn line sm","Nạp dữ liệu mẫu vào máy chủ");sd.type="button";sd.onclick=seed;ls.appendChild(sd)}bf()}
 $("#af").onsubmit=function(e){e.preventDefault();var c=C[CUR];if(!c.f)return;var o={};Object.keys(FS).forEach(function(k){o[k]=FS[k]()});if(!o[c.tk]&&!(CUR==="card"&&(o.fi||o.bi))){tt("Vui lòng nhập nội dung chính (tiêu đề) hoặc thêm hình cho thẻ.");return}
 if(CUR==="game"){if(o.type==="link"){if(!/^https?:\/\//.test(o.link)){tt("Cần liên kết bắt đầu bằng http hoặc https.");return}o.qs=[]}else{if(!o.qs.length){tt("Cần ít nhất 1 câu có nội dung, 2 đáp án và đáp án đúng.");return}o.link=""}}
-if(o.html!=null)o.html=san(o.html);if(EDIT>=0)c.a[EDIT]=o;else c.a.push(o);EDIT=-1;ra();sh();tt("Đã lưu.")};
+if(o.html!=null)o.html=san(o.html);
+var ix=EDIT,old=ix>=0?c.a[ix]:null,kind=CUR;
+var done=function(id){if(id)o._id=id;else if(old&&old._id)o._id=old._id;if(ix>=0)c.a[ix]=o;else c.a.push(o);EDIT=-1;ra();sh();tt("Đã lưu.")};
+if(!SB){done();return}
+if(!TOKEN){tt("Bạn cần đăng nhập lại.");return}
+(old&&old._id?sbf("/rest/v1/items?id=eq."+old._id,{method:"PATCH",body:JSON.stringify({data:o})}).then(function(){done(old._id)}):sbf("/rest/v1/items",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({kind:kind,data:o})}).then(function(r){done(r&&r[0]&&r[0].id)})).catch(function(e){tt(fe(e))})};
 document.querySelectorAll(".ao").forEach(function(b){b.onclick=function(){CUR=b.getAttribute("data-tab");EDIT=-1;$("#adm").hidden=false;view()}});
 function view(){$("#lg").hidden=LG;$("#dsh").hidden=!LG;document.querySelectorAll(".ao").forEach(function(b){b.style.display=LG?"":"none"});if(LG)sh()}
 $("#adl").onclick=function(e){e.preventDefault();$("#adm").hidden=false;view()};
 $("#ax").onclick=function(){$("#adm").hidden=true};
-$("#lg").onsubmit=function(e){e.preventDefault();if($("#lu").value==="admin"&&$("#lp").value==="demo123"){LG=true;view()}else tt("Sai tài khoản hoặc mật khẩu (demo: admin / demo123).")};
-$("#lo").onclick=function(){LG=false;$("#lp").value="";view()};
+$("#lg").onsubmit=function(e){e.preventDefault();
+if(!SB){if($("#lu").value==="admin"&&$("#lp").value==="demo123"){LG=true;view()}else tt("Sai tài khoản hoặc mật khẩu (demo: admin / demo123).");return}
+TOKEN="";sbf("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email:$("#lu").value.trim(),password:$("#lp").value})}).then(function(r){TOKEN=r.access_token;try{sessionStorage.setItem("atm_token",TOKEN)}catch(x){}LG=true;$("#lp").value="";view()}).catch(function(){tt("Sai email hoặc mật khẩu.")})};
+$("#lo").onclick=function(){LG=false;TOKEN="";try{sessionStorage.removeItem("atm_token")}catch(x){}$("#lp").value="";view()};
+if(SB){$("#lu").placeholder="Email quản trị";$("#lu").type="email";if(TOKEN)sbf("/auth/v1/user").then(function(){LG=true}).catch(function(){TOKEN="";try{sessionStorage.removeItem("atm_token")}catch(x){}});loadAll()}
 })();
 </script>
 </body>
