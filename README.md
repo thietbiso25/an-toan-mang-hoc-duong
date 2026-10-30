@@ -1,32 +1,19 @@
-# AN TOÀN MẠNG HỌC ĐƯỜNG
+# AN TOÀN MẠNG HỌC ĐƯỜNG (website tĩnh)
 
-Website tĩnh (một file `index.html`) về an toàn mạng cho học sinh: quy tắc 4C, học liệu số, thử thách 7 ngày, hỗ trợ...
+Website một file `index.html`, không cần cài đặt hay build.
 
-## Cấu trúc
+## Đưa lên GitHub
+1. Tạo repository mới trên github.com (ví dụ `an-toan-mang-hoc-duong`).
+2. Bấm **Add file → Upload files**, kéo thả `index.html` và `README.md`, rồi **Commit changes**.
 
-```
-.
-├── index.html   # toàn bộ trang web (HTML + CSS + JS)
-├── README.md    # tài liệu này
-└── .gitignore
-```
+## Triển khai trên Vercel
+1. Vào vercel.com, đăng nhập bằng GitHub, chọn **Add New → Project**.
+2. Chọn repository vừa tạo, giữ **Framework Preset: Other**, không cần Build Command.
+3. Bấm **Deploy**. Vercel cấp địa chỉ dạng `ten-du-an.vercel.app`; có thể gắn tên miền riêng ở mục **Domains**.
 
-## Xem trang trên máy
-
-Mở file `index.html` bằng trình duyệt (nhấp đúp). Không cần cài đặt gì thêm.
-
-## Cập nhật nội dung
-
-1. Sửa file `index.html`.
-2. Commit và push lên GitHub.
-3. Vercel (hoặc GitHub Pages) tự động cập nhật trang sau ít phút.
-
-## Triển khai
-
-- **Vercel:** Import repo, Framework Preset = *Other*, để trống Build Command và Output Directory, bấm Deploy.
-- **GitHub Pages:** Settings → Pages → Branch `main`, thư mục `/ (root)`.
-
-## Ghi chú
-
-- Phông chữ Be Vietnam Pro tải từ Google Fonts (cần Internet).
-- Liên hệ/hỗ trợ: xem phần liên kết Zalo và Facebook trong trang.
+## Lưu ý trước khi công bố
+- **Trợ lý hỏi đáp** trên bản này chạy chế độ **trả lời theo từ khóa** (Quy tắc 4C, bắt nạt, deepfake, OTP). Trả lời bằng AI thật cần một máy chủ trung gian giữ khóa API, không được đặt khóa trong `index.html`.
+- **Khu Quản trị là bản demo**: tài khoản `admin` / mật khẩu `demo123` nằm ngay trong mã nguồn, dữ liệu thêm/sửa/xóa chỉ lưu trên trình duyệt của người đang xem và mất khi tải lại. Khi công khai, nên ẩn liên kết "Quản trị" hoặc thay bằng đăng nhập và cơ sở dữ liệu thật.
+- Các nút chưa có dữ liệu (PDF cẩm nang, sổ tay Checklist, Google Forms nộp minh chứng, số liệu thống kê) cần được gắn nội dung thật. Không đưa số liệu chưa kiểm chứng lên trang.
+- Đã gắn sẵn liên kết Fanpage Facebook và nhóm Zalo ở mục **Góc Hỗ Trợ**.
+- Ảnh và video có học sinh chỉ đăng khi có đồng ý của học sinh và phụ huynh.
