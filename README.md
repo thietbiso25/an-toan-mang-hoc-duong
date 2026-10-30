@@ -1,19 +1,38 @@
-# AN TOÀN MẠNG HỌC ĐƯỜNG (website tĩnh)
+# AN TOÀN MẠNG HỌC ĐƯỜNG
 
-Website một file `index.html`, không cần cài đặt hay build.
+Website tĩnh (một file `index.html`) về an toàn mạng cho học sinh: quy tắc 4C, học liệu số, thử thách 7 ngày, hỗ trợ...
 
-## Đưa lên GitHub
-1. Tạo repository mới trên github.com (ví dụ `an-toan-mang-hoc-duong`).
-2. Bấm **Add file → Upload files**, kéo thả `index.html` và `README.md`, rồi **Commit changes**.
+## Cấu trúc
 
-## Triển khai trên Vercel
-1. Vào vercel.com, đăng nhập bằng GitHub, chọn **Add New → Project**.
-2. Chọn repository vừa tạo, giữ **Framework Preset: Other**, không cần Build Command.
-3. Bấm **Deploy**. Vercel cấp địa chỉ dạng `ten-du-an.vercel.app`; có thể gắn tên miền riêng ở mục **Domains**.
+```
+.
+├── index.html    # toàn bộ trang web (HTML + CSS + JS)
+├── supabase.sql  # tạo bảng + phân quyền trên Supabase
+├── HUONG_DAN.md  # các bước kết nối khu quản trị
+├── README.md    # tài liệu này
+└── .gitignore
+```
 
-## Lưu ý trước khi công bố
-- **Trợ lý hỏi đáp** trên bản này chạy chế độ **trả lời theo từ khóa** (Quy tắc 4C, bắt nạt, deepfake, OTP). Trả lời bằng AI thật cần một máy chủ trung gian giữ khóa API, không được đặt khóa trong `index.html`.
-- **Khu Quản trị là bản demo**: tài khoản `admin` / mật khẩu `demo123` nằm ngay trong mã nguồn, dữ liệu thêm/sửa/xóa chỉ lưu trên trình duyệt của người đang xem và mất khi tải lại. Khi công khai, nên ẩn liên kết "Quản trị" hoặc thay bằng đăng nhập và cơ sở dữ liệu thật.
-- Các nút chưa có dữ liệu (PDF cẩm nang, sổ tay Checklist, Google Forms nộp minh chứng, số liệu thống kê) cần được gắn nội dung thật. Không đưa số liệu chưa kiểm chứng lên trang.
-- Đã gắn sẵn liên kết Fanpage Facebook và nhóm Zalo ở mục **Góc Hỗ Trợ**.
-- Ảnh và video có học sinh chỉ đăng khi có đồng ý của học sinh và phụ huynh.
+## Xem trang trên máy
+
+Mở file `index.html` bằng trình duyệt (nhấp đúp). Không cần cài đặt gì thêm.
+
+## Khu quản trị
+
+Nội dung (video, trò chơi, cẩm nang, bộ thẻ, bài viết) được lưu trên Supabase. Xem `HUONG_DAN.md` để cài đặt. Tab **Thử thách 7 ngày** nhập nhiệm vụ từ file Word/txt; tab **Bộ đếm** cập nhật số Sứ giả. Khi chưa điền `SB_URL`/`SB_KEY`, trang chạy chế độ demo (không lưu).
+
+## Cập nhật giao diện/mã
+
+1. Sửa file `index.html`.
+2. Commit và push lên GitHub.
+3. Vercel (hoặc GitHub Pages) tự động cập nhật trang sau ít phút.
+
+## Triển khai
+
+- **Vercel:** Import repo, Framework Preset = *Other*, để trống Build Command và Output Directory, bấm Deploy.
+- **GitHub Pages:** Settings → Pages → Branch `main`, thư mục `/ (root)`.
+
+## Ghi chú
+
+- Phông chữ Be Vietnam Pro tải từ Google Fonts (cần Internet).
+- Liên hệ/hỗ trợ: xem phần liên kết Zalo và Facebook trong trang.
