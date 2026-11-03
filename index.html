@@ -238,11 +238,13 @@ function cv(x){return x.cover?' style="background:url('+esc(x.cover)+') center/c
 function mk(t,c,h){var d=document.createElement(t);if(c)d.className=c;if(h!=null)d.innerHTML=h;return d}
 /* ===== KẾT NỐI SUPABASE: điền 2 giá trị dưới đây (xem file HUONG_DAN.md) ===== */
 var SB_URL="https://fjmrrjlldvqupyjeaboh.supabase.co",SB_KEY="sb_publishable_nuuhz_a-hB5Fx5xyJmvU7w_45sV4isu";
-var SB=!!(SB_URL&&SB_KEY),TOKEN="",PDFID=null,SEED=null,CH={days:[]},CHID=null,ST={},STID=null,CNT={visit:null,done:null,fan:null},SENT={},MEMP=null;
-try{TOKEN=sessionStorage.getItem("atm_token")||""}catch(e){}
+var SB=!!(SB_URL&&SB_KEY),TOKEN="",REF="",PDFID=null,SEED=null,CH={days:[]},CHID=null,ST={},STID=null,CNT={visit:null,done:null,fan:null},SENT={},MEMP=null;
+try{TOKEN=sessionStorage.getItem("atm_token")||"";REF=sessionStorage.getItem("atm_ref")||""}catch(e){}
 function sbh(x){var h={apikey:SB_KEY,"Content-Type":"application/json"};if(TOKEN)h.Authorization="Bearer "+TOKEN;if(x)for(var k in x)h[k]=x[k];return h}
-function sbf(path,opt){opt=opt||{};opt.headers=sbh(opt.headers);return fetch(SB_URL+path,opt).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(r.status+" "+t)});return r.status===204?null:r.json().catch(function(){return null})})}
-function fe(e){return /^(401|403)/.test(String(e&&e.message))?"Phiên đăng nhập hết hạn, hãy đăng xuất rồi đăng nhập lại.":"Thao tác không thành công, thử lại sau."}
+function keep(r){TOKEN=r.access_token||"";REF=r.refresh_token||REF;try{sessionStorage.setItem("atm_token",TOKEN);sessionStorage.setItem("atm_ref",REF)}catch(e){}}
+function drop(){TOKEN="";REF="";try{sessionStorage.removeItem("atm_token");sessionStorage.removeItem("atm_ref")}catch(e){}}
+function sbf(path,opt,tried){opt=opt||{};var o={};for(var k in opt)o[k]=opt[k];o.headers=sbh(opt.headers);return fetch(SB_URL+path,o).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(r.status+" "+t)});return r.status===204?null:r.json().catch(function(){return null})}).catch(function(e){if(!tried&&REF&&TOKEN&&/^401/.test(String(e&&e.message))&&path.indexOf("/auth/v1/token")<0){var old=TOKEN;TOKEN="";return sbf("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:JSON.stringify({refresh_token:REF})},true).then(function(r){keep(r);return sbf(path,opt,true)}).catch(function(e2){drop();LG=false;throw e})}throw e})}
+function fe(e){var m=String(e&&e.message);return /row-level security|42501/i.test(m)?"Máy chủ từ chối quyền ghi: kiểm tra lại các policy INSERT/UPDATE/DELETE (authenticated) trên Supabase.":/^(401|403)/.test(m)?"Phiên đăng nhập đã hết hạn. Hãy bấm Đăng xuất, đăng nhập lại rồi thử lại.":"Thao tác không thành công, thử lại sau."}
 function loadAll(){if(!SB)return;var KM={video:V,game:G,ebook:P,card:F,post:PO};sbf("/rest/v1/items?select=id,kind,data&kind=in.(video,game,ebook,card,post,pdf,chal,stat)&order=created_at.asc").then(function(rows){Object.keys(KM).forEach(function(k){KM[k].length=0});PDF="";PDFID=null;CH={days:[]};CHID=null;ST={};STID=null;rows.forEach(function(r){if(r.kind==="pdf"){PDF=(r.data&&r.data.url)||"";PDFID=r.id}else if(r.kind==="chal"){CH=r.data||{days:[]};CHID=r.id}else if(r.kind==="stat"){ST=r.data||{};STID=r.id}else if(KM[r.kind]){var o=r.data||{};o._id=r.id;KM[r.kind].push(o)}});ra();rstat();if(LG&&!$("#adm").hidden)sh()}).catch(function(){tt("Không tải được dữ liệu từ máy chủ.")})}
 function seed(){if(!TOKEN){tt("Bạn cần đăng nhập.");return}var rows=[];Object.keys(SEED).forEach(function(k){SEED[k].forEach(function(o){rows.push({kind:k,data:o})})});sbf("/rest/v1/items",{method:"POST",body:JSON.stringify(rows)}).then(function(){tt("Đã nạp dữ liệu mẫu.");loadAll()}).catch(function(e){tt(fe(e))})}
 var OK={B:1,I:1,U:1,STRONG:1,EM:1,H2:1,H3:1,P:1,UL:1,OL:1,LI:1,BR:1,DIV:1,SPAN:1,IMG:1};
@@ -407,9 +409,9 @@ $("#adl").onclick=function(e){e.preventDefault();$("#adm").hidden=false;view()};
 $("#ax").onclick=function(){$("#adm").hidden=true};
 $("#lg").onsubmit=function(e){e.preventDefault();
 if(!SB){if($("#lu").value==="admin"&&$("#lp").value==="demo123"){LG=true;view()}else tt("Sai tài khoản hoặc mật khẩu (demo: admin / demo123).");return}
-TOKEN="";sbf("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email:$("#lu").value.trim(),password:$("#lp").value})}).then(function(r){TOKEN=r.access_token;try{sessionStorage.setItem("atm_token",TOKEN)}catch(x){}LG=true;$("#lp").value="";view()}).catch(function(){tt("Sai email hoặc mật khẩu.")})};
-$("#lo").onclick=function(){LG=false;TOKEN="";try{sessionStorage.removeItem("atm_token")}catch(x){}$("#lp").value="";view()};
-if(SB){$("#lu").placeholder="Email quản trị";$("#lu").type="email";if(TOKEN)sbf("/auth/v1/user").then(function(){LG=true}).catch(function(){TOKEN="";try{sessionStorage.removeItem("atm_token")}catch(x){}});loadAll();evt("visit").then(loadStats);document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-ev]");if(a)evt(a.getAttribute("data-ev")).then(loadStats)})}
+drop();sbf("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email:$("#lu").value.trim(),password:$("#lp").value})}).then(function(r){keep(r);LG=true;$("#lp").value="";view()}).catch(function(){tt("Sai email hoặc mật khẩu.")})};
+$("#lo").onclick=function(){LG=false;drop();$("#lp").value="";view()};
+if(SB){$("#lu").placeholder="Email quản trị";$("#lu").type="email";if(TOKEN)sbf("/auth/v1/user").then(function(){LG=true}).catch(function(){drop()});loadAll();evt("visit").then(loadStats);document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-ev]");if(a)evt(a.getAttribute("data-ev")).then(loadStats)})}
 })();
 </script>
 </body>
