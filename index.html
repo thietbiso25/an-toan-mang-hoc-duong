@@ -433,6 +433,7 @@ if(SB){$("#lu").placeholder="Email quản trị";$("#lu").type="email";if(TOKEN)
 .lbt th,.lbt td{padding:6px 8px;text-align:center;border-bottom:1px solid var(--line)}
 .lbt td:nth-child(2){font-weight:700}
 .lbt tr.me{background:var(--soft)}
+#xtra .btn:disabled{opacity:.45;cursor:not-allowed}
 </style>
 <script>
 (function(){
@@ -464,13 +465,15 @@ if(cf)cf.addEventListener("submit",function(){var i=$("#ci");if(i&&i.value.trim(
 if(ch)ch.addEventListener("click",function(e){if(e.target.tagName==="BUTTON")logQ()});
 
 /* 2. Mã lớp, huy hiệu, bảng xếp hạng */
-var chd=$("#chd"),bdg,bt,bs,bdl,lbb,xc,xcm;
+var chd=$("#chd"),bdg,bt,bs,bdl,bdh,lbb,xc,xcm;
 function recordDay(n){var c=cls();if(!c||!n)return;var k="atm_pg_"+c+"_"+n;if(lsGet(k))return;lsSet(k,"1");
   post("prog",{cls:c,day:n,dev:dev()}).then(function(r){if(r.ok)loadLb();else lsDel(k)}).catch(function(){lsDel(k)})}
 function syncProg(){document.querySelectorAll("#chd .day.ok").forEach(function(c){recordDay(dayOf(c))})}
-function updBadge(){if(!bdg)return;var n=document.querySelectorAll("#chd .day").length,k=document.querySelectorAll("#chd .day.ok").length,full=n>0&&k===n;
-  bdg.className="bdg"+(full?" on":"");bt.textContent=full?"Sứ giả an toàn mạng":"Chưa nhận huy hiệu";
-  bs.textContent=n?(full?"Chúc mừng! Em đã hoàn thành "+n+"/"+n+" ngày.":"Hoàn thành "+k+"/"+n+" ngày để nhận huy hiệu."):"Thử thách đang được cập nhật.";bdl.hidden=!full}
+function updBadge(){if(!bdg)return;var n=document.querySelectorAll("#chd .day").length,k=document.querySelectorAll("#chd .day.ok").length,full=n>0&&k===n,has=!!cls()&&normCls(xc.value)===cls();
+  bdg.className="bdg"+(full?" on":"");bt.textContent=full?"Sứ giả an toàn mạng":(k?"Đang trên đường thành Sứ giả":"Chưa nhận huy hiệu");
+  bs.textContent=n?(full?"Chúc mừng! Em đã hoàn thành "+n+"/"+n+" ngày.":"Em đã hoàn thành "+k+"/"+n+" ngày. Hoàn thành đủ để nhận huy hiệu Sứ giả."):"Thử thách đang được cập nhật.";
+  bdl.textContent=full?"⬇ Tải huy hiệu":"⬇ Tải giấy chứng nhận";bdl.disabled=!(k>0&&has);
+  bdh.textContent=!n?"":!has?"Hãy nhập và bấm “Lưu mã lớp” trước khi tải.":!k?"Hoàn thành ít nhất 1 ngày để tải giấy chứng nhận.":""}
 function loadLb(){if(!lbb)return;
   fetch(U+"/rest/v1/rpc/leaderboard",{method:"POST",headers:{apikey:K,"Content-Type":"application/json"},body:"{}"}).then(ok).then(function(rows){
     if(!rows.length){lbb.textContent="Chưa có lớp nào tham gia. Hãy là lớp đầu tiên!";return}
@@ -478,21 +481,34 @@ function loadLb(){if(!lbb)return;
     rows.forEach(function(r,i){var tr=el("tr",r.cls===me?"me":"");[["🥇","🥈","🥉"][i]||String(i+1),r.cls,r.members,r.finished,r.total].forEach(function(v){tr.appendChild(el("td",null,v))});t.appendChild(tr)});
     lbb.textContent="";lbb.appendChild(t);lbb.appendChild(el("div","tag","Điểm = tổng số ngày hoàn thành của các bạn trong lớp. Chỉ hiển thị mã lớp, không có họ tên.")).style.marginTop="6px"
   }).catch(function(){lbb.textContent="Chưa tải được bảng xếp hạng."})}
-function badgePng(){var n=document.querySelectorAll("#chd .day").length,c=document.createElement("canvas");c.width=800;c.height=480;var x=c.getContext("2d"),g=x.createLinearGradient(0,0,800,480);
-  g.addColorStop(0,"#1E3A8A");g.addColorStop(.6,"#2563EB");g.addColorStop(1,"#06B6D4");x.fillStyle=g;x.fillRect(0,0,800,480);x.textAlign="center";x.fillStyle="#fff";
-  x.font="120px serif";x.fillText("🛡️",400,190);x.font="700 48px sans-serif";x.fillText("SỨ GIẢ AN TOÀN MẠNG",400,270);
-  x.font="28px sans-serif";x.fillText("Hoàn thành thử thách "+n+" ngày"+(cls()?" · Lớp "+cls():""),400,325);
-  x.font="22px sans-serif";x.fillText("AN TOÀN MẠNG HỌC ĐƯỜNG · THPT Trường Chinh",400,420);
-  c.toBlob(function(b){var a=el("a");a.href=URL.createObjectURL(b);a.download="huy-hieu-su-gia-an-toan-mang.png";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)})}
+function badgePng(){
+  var D=[].slice.call(document.querySelectorAll("#chd .day")),n=D.length,k=D.filter(function(d){return d.classList.contains("ok")}).length,full=n>0&&k===n,c=document.createElement("canvas");
+  c.width=800;c.height=520;var x=c.getContext("2d"),g=x.createLinearGradient(0,0,800,520);
+  g.addColorStop(0,"#1E3A8A");g.addColorStop(.6,"#2563EB");g.addColorStop(1,"#06B6D4");x.fillStyle=g;x.fillRect(0,0,800,520);
+  x.strokeStyle="rgba(255,255,255,.35)";x.lineWidth=3;x.strokeRect(18,18,764,484);
+  x.beginPath();x.moveTo(400,40);x.lineTo(470,66);x.lineTo(470,120);x.quadraticCurveTo(470,168,400,196);x.quadraticCurveTo(330,168,330,120);x.lineTo(330,66);x.closePath();
+  x.fillStyle=full?"#F59E0B":"rgba(255,255,255,.92)";x.fill();x.textAlign="center";
+  if(full){x.lineWidth=10;x.strokeStyle="#1F1300";x.lineCap="round";x.lineJoin="round";x.beginPath();x.moveTo(370,112);x.lineTo(393,136);x.lineTo(434,90);x.stroke()}
+  else{x.fillStyle="#1E3A8A";x.font="700 40px sans-serif";x.fillText(k+"/"+n,400,134)}
+  x.fillStyle="#fff";x.font="700 44px sans-serif";x.fillText(full?"SỨ GIẢ AN TOÀN MẠNG":"GIẤY CHỨNG NHẬN THAM GIA",400,262);
+  x.font="26px sans-serif";x.fillText(full?"Đã hoàn thành đủ "+n+"/"+n+" ngày thử thách":"Đã hoàn thành "+k+"/"+n+" ngày thử thách",400,306);
+  var gap=Math.min(44,640/Math.max(n,1)),x0=400-(n-1)*gap/2;
+  D.forEach(function(d,i){var o=d.classList.contains("ok");x.beginPath();x.arc(x0+i*gap,350,14,0,7);x.fillStyle=o?"#F59E0B":"rgba(255,255,255,.25)";x.fill();
+    x.fillStyle=o?"#1F1300":"#fff";x.font="700 15px sans-serif";x.fillText(String(i+1),x0+i*gap,355)});
+  x.fillStyle="#fff";x.font="26px sans-serif";x.fillText("Lớp "+cls()+" · "+new Date().toLocaleDateString("vi-VN"),400,408);
+  if(!full){x.font="italic 20px sans-serif";x.fillStyle="#EAF1FF";x.fillText("Còn "+(n-k)+" ngày nữa để nhận huy hiệu Sứ giả an toàn mạng",400,446)}
+  x.fillStyle="#fff";x.font="20px sans-serif";x.fillText("AN TOÀN MẠNG HỌC ĐƯỜNG · THPT Trường Chinh",400,484);
+  c.toBlob(function(b){var a=el("a");a.href=URL.createObjectURL(b);a.download=(full?"huy-hieu-su-gia-":"chung-nhan-")+cls()+(full?"":"-"+k+"-"+n+"-ngay")+".png";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)})}
 if(chd){
   var box=el("div");box.id="xtra";
   box.innerHTML='<div class="card"><h3>🏫 Mã lớp của em</h3><p class="tag" style="margin-bottom:8px">Chỉ nhập mã lớp (ví dụ 10A1), không nhập họ tên. Dùng để tính điểm cho lớp.</p><input id="xc" maxlength="12" placeholder="Ví dụ: 10A1" autocomplete="off"><div class="row" style="margin-top:8px"><button class="btn main sm" id="xcs" type="button">Lưu mã lớp</button><span class="tag" id="xcm" aria-live="polite"></span></div></div>'
-   +'<div class="card"><h3>🏅 Huy hiệu của em</h3><div class="bdg" id="bdg"><span class="ic">🛡️</span><div><b id="bt"></b><div class="tag" id="bs"></div><div style="margin-top:6px"><button class="btn line sm" id="bdl" type="button" hidden>⬇ Tải huy hiệu</button></div></div></div></div>'
+   +'<div class="card"><h3>🏅 Huy hiệu của em</h3><div class="bdg" id="bdg"><span class="ic">🛡️</span><div><b id="bt"></b><div class="tag" id="bs"></div><div style="margin-top:6px"><button class="btn line sm" id="bdl" type="button" disabled>⬇ Tải huy hiệu</button><div class="tag" id="bdh" aria-live="polite" style="margin-top:4px"></div></div></div></div></div>'
    +'<div class="card" style="grid-column:1/-1"><div class="hh" style="margin:0 0 8px"><h3 style="margin:0">🏆 Bảng xếp hạng lớp</h3><button class="btn line sm" id="lbr" type="button">Làm mới</button></div><div id="lbb" class="tag">Đang tải…</div></div>';
   chd.parentNode.insertBefore(box,chd.nextSibling);
-  bdg=$("#bdg");bt=$("#bt");bs=$("#bs");bdl=$("#bdl");lbb=$("#lbb");xc=$("#xc");xcm=$("#xcm");xc.value=cls();
-  $("#xcs").onclick=function(){var v=normCls(xc.value);if(v.length<2){xcm.textContent="Nhập mã lớp, ví dụ 10A1.";return}lsSet("atm_class",v);xc.value=v;xcm.textContent="✔ Đã lưu lớp "+v;syncProg();setTimeout(loadLb,800)};
-  bdl.onclick=badgePng;$("#lbr").onclick=loadLb;
+  bdg=$("#bdg");bt=$("#bt");bs=$("#bs");bdl=$("#bdl");bdh=$("#bdh");lbb=$("#lbb");xc=$("#xc");xcm=$("#xcm");xc.value=cls();
+  $("#xcs").onclick=function(){var v=normCls(xc.value);if(v.length<2){xcm.textContent="Nhập mã lớp, ví dụ 10A1.";return}lsSet("atm_class",v);xc.value=v;xcm.textContent="✔ Đã lưu lớp "+v;updBadge();syncProg();setTimeout(loadLb,800)};
+  xc.addEventListener("input",function(){xcm.textContent="";updBadge()});
+  bdl.onclick=function(){if(!cls()||normCls(xc.value)!==cls()){xcm.textContent="Hãy bấm “Lưu mã lớp” trước khi tải.";return}badgePng()};$("#lbr").onclick=loadLb;
   chd.addEventListener("change",function(e){var t=e.target;if(t&&t.type==="checkbox"&&t.checked){var c=t.closest(".day");if(c)recordDay(dayOf(c))}},true);
   loadLb();updBadge();syncProg();
 }
