@@ -419,5 +419,106 @@ $("#lo").onclick=function(){LG=false;drop();$("#lp").value="";view()};
 if(SB){$("#lu").placeholder="Email quản trị";$("#lu").type="email";if(TOKEN)sbf("/auth/v1/user").then(function(){LG=true}).catch(function(){drop()});loadAll();evt("visit").then(loadStats);document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-ev]");if(a)evt(a.getAttribute("data-ev")).then(loadStats)})}
 })();
 </script>
+<!-- ===== BẮT ĐẦU ĐOẠN BỔ SUNG (dán ngay trước dòng </body>) ===== -->
+<style>
+#thu-thach-7-ngay .lead{text-align:justify;text-justify:inter-word}
+#chd .upl{margin-top:12px;display:grid;gap:4px;justify-items:start}
+</style>
+<script>
+(function(){
+var U="https://fjmrrjlldvqupyjeaboh.supabase.co",K="sb_publishable_nuuhz_a-hB5Fx5xyJmvU7w_45sV4isu";
+function $(s){return document.querySelector(s)}
+function lsGet(k){try{return localStorage.getItem(k)||""}catch(e){return""}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function tok(){try{return sessionStorage.getItem("atm_token")||""}catch(e){return""}}
+function dev(){var d=lsGet("atm_dev");if(!d){d=String(Date.now())+Math.random().toString(36).slice(2);lsSet("atm_dev",d)}return d}
+function post(kind,data){return fetch(U+"/rest/v1/items",{method:"POST",headers:{apikey:K,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({kind:kind,data:data||{}})})}
+
+/* 1. Bộ đếm "Lượt hỏi chatbot" thay cho "Sứ giả an toàn mạng" */
+var N=null;
+function show(){
+  var e=$("#st4");if(!e)return;
+  var t=N==null?"—":N.toLocaleString("vi-VN");
+  if(e.textContent!==t)e.textContent=t;
+  var l=e.nextElementSibling;if(l&&l.textContent!=="Lượt hỏi chatbot")l.textContent="Lượt hỏi chatbot";
+}
+var s4=$("#st4");
+if(s4){new MutationObserver(show).observe(s4,{childList:true,characterData:true,subtree:true});show()}
+var tags=document.querySelectorAll("#thu-thach-7-ngay p.tag");
+tags.forEach(function(p){if(p.textContent.indexOf("Sứ giả")>-1)p.textContent="Số liệu được đếm tự động: lượt truy cập và tương tác Fanpage tính mỗi thiết bị 1 lần mỗi ngày, hoàn thành tính khi một thiết bị tích đủ các ngày của thử thách; lượt hỏi chatbot tính mỗi câu hỏi được gửi cho trợ lý."});
+fetch(U+"/rest/v1/items?select=id&kind=eq.chat",{method:"HEAD",headers:{apikey:K,Prefer:"count=exact"}})
+ .then(function(r){var m=(r.headers.get("content-range")||"").match(/\/(\d+)$/);N=m?+m[1]:null;show()}).catch(function(){});
+function logQ(){post("chat").then(function(r){if(r.ok){N=(N||0)+1;show()}}).catch(function(){})}
+var cf=$("#cf"),ch=$("#ch");
+if(cf)cf.addEventListener("submit",function(){var i=$("#ci");if(i&&i.value.trim())logQ()},true);
+if(ch)ch.addEventListener("click",function(e){if(e.target.tagName==="BUTTON")logQ()});
+
+/* 2. Nút tải minh chứng cho từng ngày */
+function shrink(f,cb){
+  var r=new FileReader();
+  r.onload=function(){var i=new Image();
+    i.onload=function(){var k=Math.min(1,1000/Math.max(i.width,i.height)),c=document.createElement("canvas");
+      c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext("2d").drawImage(i,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.7))};
+    i.onerror=function(){cb(null)};i.src=r.result};
+  r.onerror=function(){cb(null)};r.readAsDataURL(f);
+}
+function inject(){
+  document.querySelectorAll("#chd .day").forEach(function(card){
+    if(card.querySelector(".upl"))return;
+    var dn=card.querySelector(".dn"),n=dn?parseInt(dn.textContent.replace(/\D/g,""),10):0;if(!n)return;
+    var box=document.createElement("div");box.className="upl";
+    var lb=document.createElement("label");lb.className="btn line sm";lb.style.cursor="pointer";lb.appendChild(document.createTextNode("📎 Tải minh chứng lên"));
+    var fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.style.display="none";lb.appendChild(fi);
+    var st=document.createElement("div");st.className="tag";st.setAttribute("aria-live","polite");
+    var old=lsGet("atm_proof_"+n);if(old)st.textContent="✔ Đã nộp: "+old;
+    box.appendChild(lb);box.appendChild(st);
+    var chk=card.querySelector(".chk");chk?card.insertBefore(box,chk):card.appendChild(box);
+    fi.onchange=function(){
+      var f=fi.files[0];if(!f)return;
+      if(!/^image\//.test(f.type)){st.textContent="Chỉ nhận file ảnh (chụp màn hình).";return}
+      st.textContent="Đang tải lên…";
+      shrink(f,function(u){
+        if(!u){st.textContent="Không đọc được ảnh, hãy thử ảnh khác.";return}
+        post("proof",{day:n,name:f.name,img:u,dev:dev(),ts:new Date().toISOString()}).then(function(r){
+          if(r.ok){lsSet("atm_proof_"+n,f.name);st.textContent="✔ Đã nộp: "+f.name}
+          else st.textContent="Tải lên lỗi, vui lòng thử lại."
+        }).catch(function(){st.textContent="Tải lên lỗi, kiểm tra mạng rồi thử lại."});
+        fi.value="";
+      });
+    };
+  });
+}
+var chd=$("#chd");
+if(chd){new MutationObserver(inject).observe(chd,{childList:true});inject()}
+
+/* 3. Quản trị: xem minh chứng đã nộp (tab "Minh chứng 7 ngày") */
+function adminList(ls){
+  var w=document.createElement("div");w.className="pf";w.style.marginTop="14px";w.textContent="Đang tải minh chứng…";ls.appendChild(w);
+  fetch(U+"/rest/v1/items?select=id,data,created_at&kind=eq.proof&order=created_at.desc&limit=40",{headers:{apikey:K,Authorization:"Bearer "+tok()}})
+  .then(function(r){return r.ok?r.json():Promise.reject()})
+  .then(function(rows){
+    w.textContent="";var h=document.createElement("b");h.textContent="Minh chứng đã nộp ("+rows.length+" mới nhất)";w.appendChild(h);
+    rows.forEach(function(x){
+      var d=x.data||{},it=document.createElement("div");it.className="it";it.style.flexWrap="wrap";
+      var left=document.createElement("span");left.style.cssText="display:flex;gap:10px;align-items:center;flex-wrap:wrap";
+      if(/^data:image\//.test(d.img||"")){var im=document.createElement("img");im.src=d.img;im.alt="";im.style.cssText="height:60px;max-width:100%;border-radius:8px;cursor:zoom-in";
+        im.onclick=function(){im.style.height=im.style.height==="60px"?"auto":"60px"};left.appendChild(im)}
+      var tx=document.createElement("span");tx.textContent="Ngày "+d.day+" · "+new Date(x.created_at).toLocaleString("vi-VN")+" · "+(d.name||"");left.appendChild(tx);
+      var b=document.createElement("button");b.type="button";b.className="btn line sm";b.textContent="Xóa";
+      b.onclick=function(){if(!confirm("Xóa minh chứng này?"))return;
+        fetch(U+"/rest/v1/items?id=eq."+x.id,{method:"DELETE",headers:{apikey:K,Authorization:"Bearer "+tok()}}).then(function(r){if(r.ok)it.remove();else alert("Không xóa được, hãy đăng nhập lại.")})};
+      it.appendChild(left);it.appendChild(b);w.appendChild(it);
+    });
+    if(!rows.length)w.appendChild(document.createTextNode(" Chưa có bài nộp nào."));
+  }).catch(function(){w.textContent="Không tải được minh chứng. Hãy đăng nhập lại hoặc kiểm tra quyền (policy) trên Supabase."});
+}
+var ls=$("#ls");
+if(ls)new MutationObserver(function(){
+  if(ls.textContent.indexOf("Google Forms")>-1&&!ls.querySelector(".pf")&&tok())adminList(ls);
+}).observe(ls,{childList:true});
+})();
+</script>
+<!-- ===== KẾT THÚC ĐOẠN BỔ SUNG ===== -->
+
 </body>
 </html>
