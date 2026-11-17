@@ -55,7 +55,9 @@ h2{font-size:clamp(22px,4vw,32px);color:var(--navy);margin:0 0 8px}
 .tag{font-size:12px;color:var(--mute)}
 .more{margin:16px auto 0;display:flex;justify-content:center}
 .sub-h{margin:36px 0 12px;font-size:20px;color:var(--navy)}
-.book{display:grid;gap:12px;max-width:520px}
+.book{display:grid;gap:12px;max-width:none}
+#pg.page{background:none;border:0;box-shadow:none;padding:0;min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;align-items:start}
+#pg .pgc{min-height:150px;border-radius:14px;background:var(--surface);border:1px solid var(--line);padding:22px;box-shadow:inset 6px 0 0 var(--cyan);max-height:min(640px,80vh);overflow:auto}
 .page{min-height:150px;border-radius:14px;background:var(--surface);border:1px solid var(--line);padding:22px;box-shadow:inset 6px 0 0 var(--cyan)}
 .page b{color:var(--navy)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -327,10 +329,14 @@ function rg(){var g=G[gi],b=$("#gmb");b.innerHTML="";var h=mk("div","hh",'<h3 st
 if(qi>=g.qs.length){b.appendChild(mk("p","lead","Bạn trả lời đúng "+sc+"/"+g.qs.length+" câu."));var r=mk("button","btn main","Chơi lại");r.type="button";r.onclick=function(){qi=0;sc=0;rg()};b.appendChild(r);return}
 var q=g.qs[qi],fb=mk("p","tag",""),dn=false;b.appendChild(mk("p","tag","Câu "+(qi+1)+"/"+g.qs.length));b.appendChild(mk("p",null,"<b>"+esc(q.q)+"</b>"));
 q.a.forEach(function(t,k){if(!t)return;var o=mk("button","op",esc(t));o.type="button";o.onclick=function(){if(dn)return;dn=true;if(k===q.c){sc++;o.classList.add("ok");fb.textContent="Chính xác!"}else{o.classList.add("no");fb.textContent="Chưa đúng. Đáp án đúng: "+q.a[q.c]}var n=mk("button","btn main sm","Tiếp tục ›");n.type="button";n.onclick=function(){qi++;rg()};b.appendChild(n)};b.appendChild(o)});b.appendChild(fb)}
-function pg(){var e=$("#pg");if(!P.length){e.textContent="Chưa có nội dung.";$("#pn").textContent="";return}if(!(pi<P.length))pi=0;var x=P[pi];e.innerHTML=(x.cover?'<img src="'+esc(x.cover)+'" alt="" style="max-height:110px;border-radius:12px;display:block;margin-bottom:8px">':"")+"<b>"+esc(x.emoji||"📖")+" "+esc(x.t)+"</b>"+san(x.html);$("#pn").textContent="Chương "+(pi+1)+"/"+P.length}
+var PER=2;
+function pg(){var e=$("#pg");if(!P.length){e.textContent="Chưa có nội dung.";$("#pn").textContent="";$("#bp").style.display=$("#bn").style.display="none";return}
+if(!(pi<P.length))pi=0;pi=Math.floor(pi/PER)*PER;e.innerHTML="";
+P.slice(pi,pi+PER).forEach(function(x){e.appendChild(mk("div","pgc",(x.cover?'<img src="'+esc(x.cover)+'" alt="" style="max-height:110px;border-radius:12px;display:block;margin-bottom:8px">':"")+"<b>"+esc(x.emoji||"📖")+" "+esc(x.t)+"</b>"+san(x.html)))});
+var a=pi+1,b=Math.min(pi+PER,P.length);$("#pn").textContent="Chương "+(a===b?a:a+"–"+b)+"/"+P.length;$("#bp").style.display=$("#bn").style.display=P.length>PER?"":"none"}
 function rch(){var l=$("#chl");l.innerHTML="";P.forEach(function(x,i){l.appendChild(mk("div","card",(x.cover?'<div class="vid"'+cv(x)+'></div>':"")+'<span class="k">Chương '+(i+1)+'</span><h3>'+esc(x.emoji||"")+" "+esc(x.t)+'</h3><div style="color:var(--mute);font-size:15px">'+san(x.html)+'</div>'))})}
 function rpdf(){document.querySelectorAll(".dlb").forEach(function(a){var ok=/^https?:\/\//.test(PDF);a.setAttribute("href",ok?PDF:"#");a.style.display=ok?"":"none";a.onclick=function(e){if(!ok)e.preventDefault()}})}
-$("#bp").onclick=function(){if(P.length){pi=(pi+P.length-1)%P.length;pg()}};$("#bn").onclick=function(){if(P.length){pi=(pi+1)%P.length;pg()}};
+$("#bp").onclick=function(){if(P.length>PER){pi=pi-PER<0?Math.floor((P.length-1)/PER)*PER:pi-PER;pg()}};$("#bn").onclick=function(){if(P.length>PER){pi=pi+PER>=P.length?0:pi+PER;pg()}};
 function fim(u,h){return '<div class="fimg"><i data-u="'+esc(u)+'"></i><img src="'+esc(u)+'" alt=""><span class="pill">'+h+'</span></div>'}
 function ff(el,n){el.innerHTML="";F.slice(0,n).forEach(function(x){
 var ff1=x.fi&&!x.f,bb1=x.bi&&!x.b;
@@ -350,22 +356,82 @@ $("#b1").onclick=function(){go2(CFG.book)};$("#b2").onclick=function(){go2(CFG.f
 /* chat */
 var panel=$("#panel"),log=$("#log"),cin=$("#ci"),hist=[],sfn=null,busy=false;
 function add(c,t){var d=document.createElement("div");d.className="m "+c;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
-function open(){panel.classList.add("open");$("#bb").style.display="none";if(!log.children.length)add("ai","Chào bạn! Mình trả lời về Quy tắc 4C và cách xử lý khi gặp lừa đảo, tin giả, bắt nạt mạng. Đừng nhập thông tin cá nhân nhé.")}
+function open(){panel.classList.add("open");$("#bb").style.display="none";if(!log.children.length)add("ai","Chào bạn! Mình trả lời dựa trên nội dung của chính trang web này: Quy tắc 4C, cẩm nang, thẻ ghi nhớ, trò chơi, video, thử thách 7 ngày... Đừng nhập thông tin cá nhân nhé.")}
 $("#fab").onclick=function(){panel.classList.contains("open")?panel.classList.remove("open"):open()};$("#cx").onclick=function(){panel.classList.remove("open")};
 $("#openchat").onclick=open;
-var Q=["Quy tắc 4C là gì?","Bị bắt nạt trên mạng thì làm gì?","Làm sao biết video là deepfake?"];
+var Q=["Quy tắc 4C là gì?","Bị bắt nạt trên mạng thì làm gì?","Làm sao biết video là deepfake?","Cẩm nang có mấy chương?"];
 Q.forEach(function(q){var b=document.createElement("button");b.type="button";b.textContent=q;b.onclick=function(){ask(q)};$("#ch").appendChild(b)});
-function local(q){q=q.toLowerCase();
-if(/4c/.test(q))return"Quy tắc 4C: CHẬM LẠI (bình tĩnh, không bấm link lạ), CHECK NGUỒN (xác thực qua kênh khác), CHỌN CÁCH XỬ LÝ (bảo vệ dữ liệu, lưu bằng chứng, chặn), CẢNH BÁO (báo cáo, nói với người lớn, gọi 111).";
-if(/bắt nạt|công kích|bêu/.test(q))return"Đừng đáp trả. Lưu ảnh chụp màn hình làm bằng chứng, chặn người công kích, báo cáo nội dung và nói với giáo viên chủ nhiệm hoặc phụ huynh. Cần hỗ trợ gấp có thể gọi 111.";
-if(/deepfake|video|giả/.test(q))return"Với cuộc gọi video đáng ngờ: chậm lại, gọi lại bằng số quen, hỏi câu chỉ hai người biết, không chuyển tiền. Hình ảnh và giọng nói có thể bị AI làm giả.";
-if(/otp|cccd|mật khẩu/.test(q))return"Không bao giờ gửi mã OTP, mật khẩu hay ảnh CCCD cho người lạ, kể cả khi họ xưng là ngân hàng hay cơ quan nhà nước.";
-return"Mình chưa có câu trả lời sẵn cho câu này. Bạn thử hỏi về Quy tắc 4C, bắt nạt mạng, deepfake hoặc OTP, hoặc nói với người lớn tin cậy. Khẩn cấp gọi 111."}
-function rules(){return"Bạn là trợ lý của website An toàn mạng học đường (học sinh THPT). Trả lời tiếng Việt, ngắn gọn, thân thiện, dựa trên Quy tắc 4C: Chậm lại, Check nguồn, Chọn cách xử lý, Cảnh báo. Chỉ nói về an toàn mạng, tin giả, lừa đảo, bắt nạt trực tuyến. Không hướng dẫn gây hại. Nếu bạn có dấu hiệu nguy hiểm hoặc bị tổn thương, khuyên nói với người lớn tin cậy và gọi tổng đài 111. Không yêu cầu thông tin cá nhân."}
+var LS=[],CTX="";
+function kbN(s){return String(s==null?"":s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/[^a-z0-9\s]/g," ")}
+function kbT(s){return kbN(s).split(/\s+/).filter(Boolean)}
+var KSW=" la gi co nao the nhu cho cua va khi thi minh ban em anh chi may bao nhieu nhung mot cac duoc khong de voi o trong tren ve toi hay giup xin nhe oi nay do ma cung se da dang ra sao lam muon biet hoi tra loi ";
+function kbS(w){return KSW.indexOf(" "+w+" ")>-1||(w.length<2&&!/\d/.test(w))}
+function kbTxt(e){return e?(e.textContent||"").replace(/\s+/g," ").trim():""}
+function kbBlocks(html){var d=document.createElement("div"),o=[];d.innerHTML=san(html);
+  [].forEach.call(d.querySelectorAll("h2,h3,p,li,div"),function(n){if(n.querySelector("p,li,div,h2,h3"))return;var t=kbTxt(n);if(t)o.push(t)});
+  if(!o.length){var t=kbTxt(d);if(t)o.push(t)}return o}
+function kbDocs(){var D=[];
+  function add(s,u,t,x){x=String(x||"").replace(/\s+/g," ").trim();if(x)D.push({s:s,u:u,t:t||"",x:x})}
+  function chunks(s,u,t,html){var cur="";kbBlocks(html).forEach(function(b){if(cur&&(cur+" "+b).length>280){add(s,u,t,cur);cur=b}else cur=cur?cur+" "+b:b});if(cur)add(s,u,t,cur)}
+  add("Trang chủ","#home","Giới thiệu dự án An toàn mạng học đường",kbTxt($(".hero .sub")));
+  add("Trang chủ","#home","Trang web có những mục nào","Trang web gồm các mục: Trang Chủ, Quy Tắc 4C, Kho Học Liệu Số (video, trò chơi, cẩm nang, flashcard, tin tức), Thử Thách 7 Ngày, Góc Hỗ Trợ và Về Chúng Tôi.");
+  [].forEach.call(document.querySelectorAll("#sls .slide"),function(s){add("Trang chủ","#home",kbTxt(s.querySelector("b")),kbTxt(s.querySelector("span")))});
+  add("Quy tắc 4C","#quy-tac-4c","Quy tắc 4C là gì","Quy tắc 4C gồm 4 bước ghi nhớ khi gặp tình huống đáng ngờ trên mạng: CHẬM LẠI, CHECK NGUỒN, CHỌN CÁCH XỬ LÝ, CẢNH BÁO.");
+  [].forEach.call(document.querySelectorAll("#quy-tac-4c .card"),function(c){add("Quy tắc 4C","#quy-tac-4c","Quy tắc 4C: "+kbTxt(c.querySelector("h3")),kbTxt(c.querySelector("p")))});
+  [].forEach.call(document.querySelectorAll("#ho-tro .sos,#ho-tro .card"),function(c){add("Góc hỗ trợ","#ho-tro",kbTxt(c.querySelector("h3"))||"Tổng đài 111",kbTxt(c))});
+  add("Góc hỗ trợ","#ho-tro","Cần giúp đỡ thì gọi ai, liên hệ ai","Khi cần giúp đỡ, bạn có thể gọi tổng đài 111 (Tổng đài Quốc gia Bảo vệ Trẻ em, miễn phí, 24/7), nói với giáo viên chủ nhiệm hoặc phụ huynh, tham gia nhóm Zalo của CLB Tư vấn Học đường hoặc nhắn Fanpage chính thức của dự án.");
+  add("Về chúng tôi","#about","Giới thiệu dự án KHKT",kbTxt($("#v-about .lead")));
+  [].forEach.call(document.querySelectorAll("#v-about .card"),function(c){add("Về chúng tôi","#about",kbTxt(c.querySelector("h3")),kbTxt(c.querySelector("p")))});
+  add("Về chúng tôi","#about","Cam kết đạo đức và quyền riêng tư",kbTxt($("#v-about .note")));
+  var vl=V.filter(function(x){return /^https?:\/\//.test(x.link||"")}),cd=(CH&&CH.days)||[];
+  add("Kho học liệu","#hoc-lieu-so","Kho học liệu số có những gì","Kho học liệu số gồm: "+vl.length+" video tình huống, "+G.length+" trò chơi, "+P.length+" chương cẩm nang, "+F.length+" thẻ flashcard và "+PO.length+" bài viết tin tức và mẹo an toàn mạng.");
+  if(vl.length)add("Video","#video","Video tình huống ("+vl.length+" video)","Các video: "+vl.map(function(x){return x.t}).join("; ")+".");
+  if(P.length)add("Cẩm nang","#cam-nang","Số chương của Cẩm nang 4.0 E-Book","Cẩm nang 4.0 E-Book hiện có "+P.length+" chương: "+P.slice(0,12).map(function(x){return x.t}).join("; ")+".");
+  P.forEach(function(x){chunks("Cẩm nang","#cam-nang",x.t,x.html)});
+  F.forEach(function(x,i){add("Thẻ ghi nhớ","#the-hoc","Thẻ tình huống "+(i+1),(x.f||"")+(x.b?" Cách xử lý: "+x.b:""))});
+  PO.forEach(function(x){chunks("Tin tức và mẹo","#tin-tuc",x.t,x.html)});
+  G.forEach(function(g){add("Trò chơi","#tro-choi",g.t,(g.d||"")+(g.type==="quiz"?" Trắc nghiệm "+(g.qs||[]).length+" câu.":" Trò chơi liên kết ngoài."));
+    (g.qs||[]).forEach(function(q){add("Trò chơi","#tro-choi",g.t+": "+q.q,"Câu hỏi: "+q.q+" Đáp án đúng: "+((q.a&&q.a[q.c])||""))})});
+  add("Thử thách 7 ngày","#thu-thach-7-ngay","Thử thách 7 ngày là gì",kbTxt($("#thu-thach-7-ngay .lead"))+" Thử thách gồm "+(cd.length||7)+" ngày; mỗi ngày làm một việc nhỏ, tích “Tôi đã hoàn thành việc này” và có thể tải ảnh minh chứng lên.");
+  cd.forEach(function(d){add("Thử thách 7 ngày","#thu-thach-7-ngay","Thử thách ngày "+d.n+": "+(d.t||""),(d.l||[]).join(" "))});
+  add("Thử thách 7 ngày","#thu-thach-7-ngay","Mã lớp, bảng xếp hạng và huy hiệu","Học sinh nhập mã lớp (ví dụ 10A1, không nhập họ tên) rồi bấm Lưu mã lớp. Mỗi ngày hoàn thành được tính điểm cho lớp; bảng xếp hạng lớp xếp theo tổng số ngày hoàn thành của các bạn. Hoàn thành đủ các ngày sẽ nhận huy hiệu Sứ giả an toàn mạng; chưa đủ ngày vẫn tải được giấy chứng nhận tham gia sau khi lưu mã lớp.");
+  add("Thử thách 7 ngày","#thu-thach-7-ngay","Cách nộp minh chứng","Mỗi ngày có nút Tải minh chứng lên để nộp ảnh chụp màn hình; nhớ che mật khẩu, số điện thoại, email trong ảnh. Nếu trang có nút Nộp Minh chứng Online thì có thể nộp thêm qua Google Forms.");
+  add("Thử thách 7 ngày","#thu-thach-7-ngay","Các bộ đếm trên web","Bộ đếm gồm lượt truy cập, học sinh thực nghiệm hoàn thành, tương tác Fanpage và lượt hỏi chatbot, được đếm tự động.");
+  return D}
+function kbSearch(q){var D=kbDocs(),tq=kbT(q),Q=[],Bg=[];
+  tq.forEach(function(w,i){if(!kbS(w)){if(Q.indexOf(w)<0)Q.push(w);if(i+1<tq.length&&!kbS(tq[i+1]))Bg.push(w+" "+tq[i+1])}});
+  if(!Q.length)return{Q:Q,r:[]};
+  D.forEach(function(d){d.n=" "+kbT(d.t+" "+d.x).join(" ")+" ";d.tn=" "+kbT(d.t).join(" ")+" "});
+  var N=D.length,idf={},tot=0,r=[];
+  Q.forEach(function(w){var df=0;D.forEach(function(d){if(d.n.indexOf(" "+w+" ")>-1)df++});idf[w]=Math.log(1+N/(1+df));tot+=idf[w]});
+  D.forEach(function(d){var m=0,sc=0,bh=0;
+    Q.forEach(function(w){if(d.n.indexOf(" "+w+" ")>-1){m+=idf[w];sc+=idf[w]*(d.tn.indexOf(" "+w+" ")>-1?2.5:1)}});
+    Bg.forEach(function(b){if(d.n.indexOf(" "+b+" ")>-1)bh++});
+    var cov=m/tot;if(cov>=.5||(bh&&cov>=.3))r.push({d:d,s:sc+3*bh})});
+  r.sort(function(a,b){return b.s-a.s});return{Q:Q,r:r}}
+function kbPick(text,Q,max){if(text.length<=max)return text;
+  var ss=text.match(/[^.!?…]+[.!?…]*\s*/g)||[text],best=-1,bi=0;
+  ss.forEach(function(s,i){var n=" "+kbT(s).join(" ")+" ",c=0;Q.forEach(function(w){if(n.indexOf(" "+w+" ")>-1)c++});if(c>best){best=c;bi=i}});
+  var o=ss[bi].trim();if(bi+1<ss.length&&o.length<220)o+=" "+ss[bi+1].trim();
+  return o.length>max?o.slice(0,max-3)+"…":o}
+function local(q){var n=kbN(q).trim();LS=[];CTX="";
+  if(/(nghi den|muon|dinh) (tu tu|tu sat|chet)|tu sat|tu hai|muon chet|xam hai|doa giet|bi danh/.test(n)){LS=[{l:"Góc hỗ trợ",u:"#ho-tro"}];return"Mình rất tiếc khi bạn đang gặp chuyện khó khăn. Bạn không phải đối mặt một mình: hãy nói ngay với người lớn tin cậy (giáo viên chủ nhiệm, phụ huynh) hoặc gọi 111 (Tổng đài Quốc gia Bảo vệ Trẻ em, miễn phí, 24/7). Nếu đang gặp nguy hiểm trực tiếp, hãy gọi 113 hoặc 115 ngay."}
+  if(!n||/^(xin )?chao|^hello|^hi$|^alo/.test(n))return"Chào bạn! Bạn có thể hỏi mình về nội dung trên web này: Quy tắc 4C, các chương cẩm nang, thẻ ghi nhớ, trò chơi, video, thử thách 7 ngày, huy hiệu hay nơi nhờ giúp đỡ.";
+  if(/cam on|thanks|thank you/.test(n))return"Không có gì! Bạn cần tìm thêm nội dung nào trên web thì cứ hỏi mình nhé.";
+  var s=kbSearch(q),r=s.r;CTX=r.slice(0,4).map(function(o){return"["+o.d.s+" – "+o.d.t+"] "+o.d.x}).join("\n");
+  if(!r.length){LS=[{l:"Góc hỗ trợ",u:"#ho-tro"}];return"Mình chưa tìm thấy nội dung này trên web. Bạn thử hỏi về: Quy tắc 4C, các chương cẩm nang, thẻ ghi nhớ, trò chơi, video, thử thách 7 ngày hoặc cách nhận huy hiệu. Cần giúp đỡ gấp thì hãy nói với người lớn tin cậy hoặc gọi 111."}
+  var top=r[0],out=[kbHead("Theo mục",top.d)+kbPick(top.d.x,s.Q,400)],seen={};seen[top.d.x]=1;LS=[{l:top.d.s,u:top.d.u}];
+  for(var i=1;i<r.length&&out.length<2;i++){var o=r[i];if(o.s<top.s*.6||seen[o.d.x]||o.d.s===top.d.s&&o.d.t===top.d.t)continue;
+    seen[o.d.x]=1;out.push(kbHead("Ngoài ra, ở mục",o.d)+kbPick(o.d.x,s.Q,300));if(!LS.some(function(z){return z.u===o.d.u}))LS.push({l:o.d.s,u:o.d.u})}
+  return out.join("\n\n")}
+function kbHead(pre,d){var t=d.t.length>70?d.t.slice(0,67)+"…":d.t;return pre+" «"+d.s+"»"+(t&&t!==d.s?" – "+t:"")+":\n"}
+function srcs(b){if(!LS.length)return;var w=document.createElement("div");w.style.cssText="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap";
+  LS.forEach(function(z){var a=document.createElement("a");a.href=z.u;a.textContent="Xem mục "+z.l+" ›";a.style.cssText="font-size:12px;font-weight:700";a.onclick=function(){if(innerWidth<760)panel.classList.remove("open")};w.appendChild(a)});b.appendChild(w)}
+function rules(){return"Bạn là trợ lý của website An toàn mạng học đường (học sinh THPT). Trả lời tiếng Việt, ngắn gọn, thân thiện. ƯU TIÊN dùng đúng thông tin trong phần NỘI DUNG TRÊN WEB bên dưới và nói rõ thông tin nằm ở mục nào của web; nếu web chưa có thì nói rõ điều đó rồi mới trả lời chung dựa trên Quy tắc 4C: Chậm lại, Check nguồn, Chọn cách xử lý, Cảnh báo. Chỉ nói về an toàn mạng, tin giả, lừa đảo, bắt nạt trực tuyến và cách dùng web này. Không hướng dẫn gây hại. Nếu bạn có dấu hiệu nguy hiểm hoặc bị tổn thương, khuyên nói với người lớn tin cậy và gọi tổng đài 111. Không yêu cầu thông tin cá nhân.\n\nNỘI DUNG TRÊN WEB:\n"+CTX}
 async function ask(t){if(busy)return;$("#ch").hidden=true;add("me",t);hist.push({role:"user",content:t});var b=add("ai","Đang trả lời…");
 if(!sfn){try{sfn=await claude.use("sample")}catch(e){sfn=null}}
-var lo=local(t);if(!sfn){b.textContent=lo;hist.push({role:"assistant",content:lo});return}
-busy=true;try{var r=await sfn([{role:"user",content:rules()}].concat(hist.slice(-10)),{cache:false,modelTier:"quick",onText:function(u){b.textContent=u.text;log.scrollTop=log.scrollHeight}});hist.push({role:"assistant",content:r.text})}catch(e){b.textContent=(e&&e.text)||lo;hist.push({role:"assistant",content:b.textContent})}finally{busy=false}}
+var lo=local(t);if(!sfn){b.textContent=lo;srcs(b);hist.push({role:"assistant",content:lo});return}
+busy=true;try{var r=await sfn([{role:"user",content:rules()}].concat(hist.slice(-10)),{cache:false,modelTier:"quick",onText:function(u){b.textContent=u.text;log.scrollTop=log.scrollHeight}});hist.push({role:"assistant",content:r.text});srcs(b)}catch(e){b.textContent=(e&&e.text)||lo;hist.push({role:"assistant",content:b.textContent})}finally{busy=false}}
 $("#cf").onsubmit=function(e){e.preventDefault();var v=cin.value.trim();if(v){cin.value="";ask(v)}};
 function tt(m){var d=$("#tt");d.textContent=m;d.style.display="block";clearTimeout(tt.t);tt.t=setTimeout(function(){d.style.display="none"},3500)}
 var VW={about:"v-about",video:"v-video","tro-choi":"v-game","cam-nang":"v-cam","the-hoc":"v-the","tin-tuc":"v-post"};
