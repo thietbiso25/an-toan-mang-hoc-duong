@@ -370,9 +370,20 @@ function kbTxt(e){return e?(e.textContent||"").replace(/\s+/g," ").trim():""}
 function kbBlocks(html){var d=document.createElement("div"),o=[];d.innerHTML=san(html);
   [].forEach.call(d.querySelectorAll("h2,h3,p,li,div"),function(n){if(n.querySelector("p,li,div,h2,h3"))return;var t=kbTxt(n);if(t)o.push(t)});
   if(!o.length){var t=kbTxt(d);if(t)o.push(t)}return o}
+function kbOrd(x){var m=kbN(x.t).match(/chuong\s*(\d+)/);return m?+m[1]:999}
+function kbSorted(){return P.map(function(x,i){return{x:x,i:i}}).sort(function(a,b){return kbOrd(a.x)-kbOrd(b.x)||a.i-b.i}).map(function(o){return o.x})}
+function kbChapIdx(n){var m=n.match(/chuong\s*(\d+)/),i;
+  if(m){for(i=0;i<P.length;i++)if(new RegExp("chuong\\s*"+(+m[1])+"(?!\\d)").test(kbN(P[i].t)))return i;return -2}
+  if(/phan cuoi/.test(n)){for(i=0;i<P.length;i++)if(/phan cuoi/.test(kbN(P[i].t)))return i}
+  return -1}
+function kbOverview(x){var bl=kbBlocks(x.html),o=[],len=0;
+  if(!bl.length)return"Chương này hiện chưa có nội dung chữ trên web.";
+  for(var i=0;i<bl.length;i++){if(len&&len+bl[i].length>650)break;o.push(bl[i]);len+=bl[i].length;if(len>650)break}
+  return"Nội dung «"+x.t+"»:\n"+o.join("\n")+(o.length<bl.length?"\n…\nĐể đọc đầy đủ, hãy mở mục Cẩm nang. Bạn cũng có thể hỏi cụ thể hơn, ví dụ về một tình huống hoặc kỹ năng trong chương.":"")}
+function kbChapList(){return"Hiện có: "+kbSorted().map(function(x){return x.t}).join("; ")+"."}
 function kbDocs(){var D=[];
-  function add(s,u,t,x){x=String(x||"").replace(/\s+/g," ").trim();if(x)D.push({s:s,u:u,t:t||"",x:x})}
-  function chunks(s,u,t,html){var cur="";kbBlocks(html).forEach(function(b){if(cur&&(cur+" "+b).length>280){add(s,u,t,cur);cur=b}else cur=cur?cur+" "+b:b});if(cur)add(s,u,t,cur)}
+  function add(s,u,t,x,m){x=String(x||"").replace(/[ \t\r\f\v]+/g," ").replace(/\s*\n\s*/g,"\n").trim();if(x)D.push({s:s,u:u,t:t||"",x:x,m:m})}
+  function chunks(s,u,t,html){var cur="";kbBlocks(html).forEach(function(b){if(cur&&(cur+" "+b).length>280){add(s,u,t,cur);cur=b}else cur=cur?cur+"\n"+b:b});if(cur)add(s,u,t,cur)}
   add("Trang chủ","#home","Giới thiệu dự án An toàn mạng học đường",kbTxt($(".hero .sub")));
   add("Trang chủ","#home","Trang web có những mục nào","Trang web gồm các mục: Trang Chủ, Quy Tắc 4C, Kho Học Liệu Số (video, trò chơi, cẩm nang, flashcard, tin tức), Thử Thách 7 Ngày, Góc Hỗ Trợ và Về Chúng Tôi.");
   [].forEach.call(document.querySelectorAll("#sls .slide"),function(s){add("Trang chủ","#home",kbTxt(s.querySelector("b")),kbTxt(s.querySelector("span")))});
@@ -384,9 +395,9 @@ function kbDocs(){var D=[];
   [].forEach.call(document.querySelectorAll("#v-about .card"),function(c){add("Về chúng tôi","#about",kbTxt(c.querySelector("h3")),kbTxt(c.querySelector("p")))});
   add("Về chúng tôi","#about","Cam kết đạo đức và quyền riêng tư",kbTxt($("#v-about .note")));
   var vl=V.filter(function(x){return /^https?:\/\//.test(x.link||"")}),cd=(CH&&CH.days)||[];
-  add("Kho học liệu","#hoc-lieu-so","Kho học liệu số có những gì","Kho học liệu số gồm: "+vl.length+" video tình huống, "+G.length+" trò chơi, "+P.length+" chương cẩm nang, "+F.length+" thẻ flashcard và "+PO.length+" bài viết tin tức và mẹo an toàn mạng.");
-  if(vl.length)add("Video","#video","Video tình huống ("+vl.length+" video)","Các video: "+vl.map(function(x){return x.t}).join("; ")+".");
-  if(P.length)add("Cẩm nang","#cam-nang","Số chương của Cẩm nang 4.0 E-Book","Cẩm nang 4.0 E-Book hiện có "+P.length+" chương: "+P.slice(0,12).map(function(x){return x.t}).join("; ")+".");
+  add("Kho học liệu","#hoc-lieu-so","Kho học liệu số có những gì","Kho học liệu số gồm: "+vl.length+" video tình huống, "+G.length+" trò chơi, "+P.length+" chương cẩm nang, "+F.length+" thẻ flashcard và "+PO.length+" bài viết tin tức và mẹo an toàn mạng.",1);
+  if(vl.length)add("Video","#video","Video tình huống ("+vl.length+" video)","Các video: "+vl.map(function(x){return x.t}).join("; ")+".",1);
+  if(P.length){var so=kbSorted(),nc=so.filter(function(x){return kbOrd(x)<999}).length,no=so.length-nc;add("Cẩm nang","#cam-nang","Số chương của Cẩm nang 4.0 E-Book","Cẩm nang 4.0 E-Book hiện có "+nc+" chương"+(no?" và "+no+" phần khác":"")+", theo thứ tự: "+so.map(function(x){return x.t}).join("; ")+".",1)}
   P.forEach(function(x){chunks("Cẩm nang","#cam-nang",x.t,x.html)});
   F.forEach(function(x,i){add("Thẻ ghi nhớ","#the-hoc","Thẻ tình huống "+(i+1),(x.f||"")+(x.b?" Cách xử lý: "+x.b:""))});
   PO.forEach(function(x){chunks("Tin tức và mẹo","#tin-tuc",x.t,x.html)});
@@ -398,7 +409,7 @@ function kbDocs(){var D=[];
   add("Thử thách 7 ngày","#thu-thach-7-ngay","Cách nộp minh chứng","Mỗi ngày có nút Tải minh chứng lên để nộp ảnh chụp màn hình; nhớ che mật khẩu, số điện thoại, email trong ảnh. Nếu trang có nút Nộp Minh chứng Online thì có thể nộp thêm qua Google Forms.");
   add("Thử thách 7 ngày","#thu-thach-7-ngay","Các bộ đếm trên web","Bộ đếm gồm lượt truy cập, học sinh thực nghiệm hoàn thành, tương tác Fanpage và lượt hỏi chatbot, được đếm tự động.");
   return D}
-function kbSearch(q){var D=kbDocs(),tq=kbT(q),Q=[],Bg=[];
+function kbSearch(q,only){var D=kbDocs(),tq=kbT(q),Q=[],Bg=[];if(only){D=D.filter(function(d){return d.s==="Cẩm nang"&&d.t===only});tq=tq.filter(function(w){return!/^(noi|dung|chuong|tom|tat|phan|cuoi|\d+)$/.test(w)})}
   tq.forEach(function(w,i){if(!kbS(w)){if(Q.indexOf(w)<0)Q.push(w);if(i+1<tq.length&&!kbS(tq[i+1]))Bg.push(w+" "+tq[i+1])}});
   if(!Q.length)return{Q:Q,r:[]};
   D.forEach(function(d){d.n=" "+kbT(d.t+" "+d.x).join(" ")+" ";d.tn=" "+kbT(d.t).join(" ")+" "});
@@ -410,18 +421,26 @@ function kbSearch(q){var D=kbDocs(),tq=kbT(q),Q=[],Bg=[];
     var cov=m/tot;if(cov>=.5||(bh&&cov>=.3))r.push({d:d,s:sc+3*bh})});
   r.sort(function(a,b){return b.s-a.s});return{Q:Q,r:r}}
 function kbPick(text,Q,max){if(text.length<=max)return text;
-  var ss=text.match(/[^.!?…]+[.!?…]*\s*/g)||[text],best=-1,bi=0;
+  var ss=text.replace(/([.!?…])\s+/g,"$1\u0001").replace(/\n+/g,"\u0001").split("\u0001").filter(Boolean),best=-1,bi=0;
   ss.forEach(function(s,i){var n=" "+kbT(s).join(" ")+" ",c=0;Q.forEach(function(w){if(n.indexOf(" "+w+" ")>-1)c++});if(c>best){best=c;bi=i}});
   var o=ss[bi].trim();if(bi+1<ss.length&&o.length<220)o+=" "+ss[bi+1].trim();
   return o.length>max?o.slice(0,max-3)+"…":o}
-function local(q){var n=kbN(q).trim();LS=[];CTX="";
+function local(q){var n=kbN(q).trim(),cx=null,only=null;LS=[];CTX="";
   if(/(nghi den|muon|dinh) (tu tu|tu sat|chet)|tu sat|tu hai|muon chet|xam hai|doa giet|bi danh/.test(n)){LS=[{l:"Góc hỗ trợ",u:"#ho-tro"}];return"Mình rất tiếc khi bạn đang gặp chuyện khó khăn. Bạn không phải đối mặt một mình: hãy nói ngay với người lớn tin cậy (giáo viên chủ nhiệm, phụ huynh) hoặc gọi 111 (Tổng đài Quốc gia Bảo vệ Trẻ em, miễn phí, 24/7). Nếu đang gặp nguy hiểm trực tiếp, hãy gọi 113 hoặc 115 ngay."}
   if(!n||/^(xin )?chao|^hello|^hi$|^alo/.test(n))return"Chào bạn! Bạn có thể hỏi mình về nội dung trên web này: Quy tắc 4C, các chương cẩm nang, thẻ ghi nhớ, trò chơi, video, thử thách 7 ngày, huy hiệu hay nơi nhờ giúp đỡ.";
   if(/cam on|thanks|thank you/.test(n))return"Không có gì! Bạn cần tìm thêm nội dung nào trên web thì cứ hỏi mình nhé.";
-  var s=kbSearch(q),r=s.r;CTX=r.slice(0,4).map(function(o){return"["+o.d.s+" – "+o.d.t+"] "+o.d.x}).join("\n");
-  if(!r.length){LS=[{l:"Góc hỗ trợ",u:"#ho-tro"}];return"Mình chưa tìm thấy nội dung này trên web. Bạn thử hỏi về: Quy tắc 4C, các chương cẩm nang, thẻ ghi nhớ, trò chơi, video, thử thách 7 ngày hoặc cách nhận huy hiệu. Cần giúp đỡ gấp thì hãy nói với người lớn tin cậy hoặc gọi 111."}
-  var top=r[0],out=[kbHead("Theo mục",top.d)+kbPick(top.d.x,s.Q,400)],seen={};seen[top.d.x]=1;LS=[{l:top.d.s,u:top.d.u}];
-  for(var i=1;i<r.length&&out.length<2;i++){var o=r[i];if(o.s<top.s*.6||seen[o.d.x]||o.d.s===top.d.s&&o.d.t===top.d.t)continue;
+  var ix=kbChapIdx(n);
+  if(ix===-2){LS=[{l:"Cẩm nang",u:"#cam-nang"}];return"Cẩm nang hiện chưa có chương này. "+kbChapList()}
+  if(ix>-1){cx=P[ix];LS=[{l:"Cẩm nang",u:"#cam-nang"}];
+    var rest=kbT(q).filter(function(w){return!kbS(w)&&!/^(noi|dung|chuong|tom|tat|gioi|thieu|cam|nang|phan|cuoi|e|book|\d+)$/.test(w)});
+    if(!rest.length){var ov=kbOverview(cx);CTX="["+cx.t+"] "+ov;return ov}
+    only=cx.t}
+  var s=kbSearch(q,only),r=s.r;CTX=r.slice(0,4).map(function(o){return"["+o.d.s+" – "+o.d.t+"] "+o.d.x}).join("\n");
+  if(!r.length){
+    if(cx)return"Mình chưa thấy nội dung bạn hỏi trong chương này. Tóm tắt chương:\n"+kbOverview(cx);
+    LS=[{l:"Góc hỗ trợ",u:"#ho-tro"}];return"Mình chưa tìm thấy nội dung này trên web. Bạn thử hỏi về: Quy tắc 4C, các chương cẩm nang, thẻ ghi nhớ, trò chơi, video, thử thách 7 ngày hoặc cách nhận huy hiệu. Cần giúp đỡ gấp thì hãy nói với người lớn tin cậy hoặc gọi 111."}
+  var top=r[0],out=[kbHead("Theo mục",top.d)+kbPick(top.d.x,s.Q,top.d.m?900:400)],seen={};seen[top.d.x]=1;LS=[{l:top.d.s,u:top.d.u}];
+  if(!only)for(var i=1;i<r.length&&out.length<2;i++){var o=r[i];if(o.d.m||o.s<top.s*.75||seen[o.d.x]||o.d.s===top.d.s&&o.d.t===top.d.t)continue;
     seen[o.d.x]=1;out.push(kbHead("Ngoài ra, ở mục",o.d)+kbPick(o.d.x,s.Q,300));if(!LS.some(function(z){return z.u===o.d.u}))LS.push({l:o.d.s,u:o.d.u})}
   return out.join("\n\n")}
 function kbHead(pre,d){var t=d.t.length>70?d.t.slice(0,67)+"…":d.t;return pre+" «"+d.s+"»"+(t&&t!==d.s?" – "+t:"")+":\n"}
